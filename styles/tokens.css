@@ -1,0 +1,56 @@
+/* Design Tokens — EZ-Print Studio */
+:root {
+  /* Surfaces */
+  --bg-canvas: #e9ecf1;
+  --bg-canvas-dot: #cfd6e1;
+  --bg-panel: #ffffff;
+  --bg-panel-subtle: #f7f8fa;
+  --bg-control: #f2f4f7;
+  --bg-control-hover: #e7ebf2;
+
+  /* Borders */
+  --border-subtle: #e4e7ee;
+  --border-strong: #d0d6e2;
+  --border-focus: #2563eb;
+
+  /* Typography Ink */
+  --ink-primary: #111827;
+  --ink-secondary: #475467;
+  --ink-muted: #667085;
+  --ink-inverse: #ffffff;
+
+  /* Brand & Semantic */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-border: #bfdbfe;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --success: #059669;
+  --guide-color: rgba(37, 99, 235, 0.42);
+
+  /* Typography */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Radii */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 2px 6px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0 8px 24px rgba(16, 24, 40, 0.09), 0 2px 6px rgba(16, 24, 40, 0.05);
+  --shadow-sheet: 0 14px 34px rgba(15, 23, 42, 0.13), 0 3px 10px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.06);
+
+  /* Layout Dimensions */
+  --topbar-h: 56px;
+  --sidebar-w: 296px;
+  --inspector-w: 312px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

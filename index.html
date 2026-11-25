@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EZ-Print — Browser Image Layout &amp; Print Studio</title>
+  <meta name="description" content="Arrange, preview, and print multiple images directly from your browser with exact physical dimensions and zero server uploads." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M9 12V7.5A1.5 1.5 0 0 1 10.5 6h11A1.5 1.5 0 0 1 23 7.5V12' stroke='%23fff' stroke-width='2' fill='none'/%3E%3Crect x='6' y='11.5' width='20' height='10' rx='2.5' fill='%23fff'/%3E%3Crect x='9.5' y='17.5' width='13' height='8.5' rx='1.2' fill='%23EFF6FF' stroke='%232563EB' stroke-width='1.5'/%3E%3Ccircle cx='22.5' cy='15' r='1.2' fill='%232563EB'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/app.css" />
+  <link rel="stylesheet" href="styles/print.css" />
+  <style id="dynamic-page-style"></style>
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <!-- Top Application Bar -->
+    <header class="topbar" role="banner">
+      <div class="topbar-left">
+        <button class="icon-btn mobile-only" id="toggleSidebarBtn" type="button" aria-label="Toggle Images Panel" title="Images">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <span class="badge-dot" id="mobileImageCount">0</span>
+        </button>
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" rx="1" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">EZ-Print</span>
+            <span class="brand-sub" id="headerSummary">No images loaded</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Primary Layout Mode Switcher -->
+      <nav class="mode-switcher" role="tablist" aria-label="Print Layout Modes">
+        <button class="mode-tab active" role="tab" aria-selected="true" data-mode="one-per-page" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><rect x="7.5" y="7" width="9" height="10" rx="1"/></svg>
+          <span>One Per Page</span>
+        </button>
+        <button class="mode-tab" role="tab" aria-selected="false" data-mode="custom-grid" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <span>Custom Grid</span>
+        </button>
+        <button class="mode-tab" role="tab" aria-selected="false" data-mode="all-on-one" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="2"/><rect x="7" y="6" width="4" height="4.5" rx="0.5"/><rect x="13" y="6" width="4" height="4.5" rx="0.5"/><rect x="7" y="13" width="4" height="4.5" rx="0.5"/><rect x="13" y="13" width="4" height="4.5" rx="0.5"/></svg>
+          <span>All on One Page</span>
+        </button>
+      </nav>
+
+      <div class="topbar-right">
+        <button class="btn btn-ghost" id="headerAddBtn" type="button" title="Add images from your device">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="hide-sm">Add Images</span>
+        </button>
+        <button class="btn btn-primary" id="printBtn" type="button" disabled title="Print pages (Ctrl+P)">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span>Print</span>
+          <span class="print-count-pill" id="printPageBadge" hidden>0</span>
+        </button>
+        <button class="icon-btn mobile-only" id="toggleInspectorBtn" type="button" aria-label="Toggle Layout Settings" title="Layout Settings">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp" multiple hidden />
+
+    <!-- Main Three-Column Workspace -->
+    <div class="workspace">
+      <!-- Mobile Drawer Backdrop -->
+      <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+
+      <!-- Left Panel: Image Queue & Upload -->
+      <aside class="panel sidebar" id="sidebarPanel" aria-label="Uploaded Images">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title">Images</h2>
+            <span class="count-pill" id="imageCountPill">0</span>
+          </div>
+          <div class="panel-actions">
+            <button class="icon-btn-sm" id="reverseOrderBtn" type="button" title="Reverse image order" disabled>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+            </button>
+            <button class="icon-btn-sm danger" id="clearAllBtn" type="button" title="Remove all images" disabled>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+            <button class="icon-btn-sm mobile-only" id="closeSidebarBtn" type="button" aria-label="Close Images Panel">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Compact Dropzone -->
+        <div class="sidebar-dropzone" id="sidebarDropzone" role="button" tabindex="0" aria-label="Drop images here or click to browse">
+          <div class="dropzone-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="dropzone-copy">
+            <strong>Drop images or browse</strong>
+            <span>JPG, PNG, GIF, WebP · Paste supported</span>
+          </div>
+        </div>
+
+        <!-- Sortable Image List -->
+        <div class="image-list-wrap" id="imageListWrap">
+          <div class="image-list-empty" id="sidebarEmpty">
+            <p>No images yet.</p>
+            <span>Drag files anywhere on the page or try sample images to preview layouts.</span>
+            <button class="btn btn-subtle btn-sm" id="sidebarSampleBtn" type="button">Load 6 Sample Images</button>
+          </div>
+          <ul class="image-list" id="imageList" role="list" aria-label="Uploaded image order"></ul>
+        </div>
+      </aside>
+
+      <!-- Center Stage: Live Print Preview -->
+      <main class="preview-area" id="previewArea" aria-label="Live Print Preview">
+        <!-- Preview Floating Toolbar -->
+        <div class="preview-toolbar" id="previewToolbar">
+          <div class="toolbar-group">
+            <span class="spec-chip" id="paperSpecChip">A4 · 210 × 297 mm</span>
+            <span class="spec-divider" aria-hidden="true"></span>
+            <span class="spec-chip accent" id="pageCountChip">0 Pages</span>
+          </div>
+
+          <div class="toolbar-group">
+            <button class="tool-toggle" id="resetAllTransformsBtn" type="button" hidden title="Reset all manual photo transforms in this layout mode">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              <span>Reset Transforms</span>
+            </button>
+
+            <div class="segmented-sm" role="group" aria-label="Preview layout">
+              <button class="seg-btn active" id="viewStackBtn" type="button" title="Vertical page scroll">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="8" rx="1"/><rect x="5" y="13" width="14" height="8" rx="1"/></svg>
+              </button>
+              <button class="seg-btn" id="viewGridBtn" type="button" title="Multi-page overview grid">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="8" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/><rect x="14" y="13" width="7" height="8" rx="1"/></svg>
+              </button>
+            </div>
+
+            <button class="tool-toggle active" id="guidesToggleBtn" type="button" title="Toggle preview margin &amp; layout guides (never printed)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+              <span class="hide-md">Guides</span>
+            </button>
+
+            <div class="zoom-controls" role="group" aria-label="Preview zoom">
+              <button class="icon-btn-xs" id="zoomOutBtn" type="button" title="Zoom out" aria-label="Zoom out">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button class="zoom-readout" id="zoomFitBtn" type="button" title="Reset zoom to Fit Page">Fit</button>
+              <button class="icon-btn-xs" id="zoomInBtn" type="button" title="Zoom in" aria-label="Zoom in">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scrollable Preview Canvas -->
+        <div class="preview-scroll" id="previewScroll">
+          <!-- Empty Canvas Welcome State -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-card" id="emptyDropzone">
+              <div class="empty-illustration" aria-hidden="true">
+                <div class="sheet-deco sheet-deco-back"></div>
+                <div class="sheet-deco sheet-deco-front">
+                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+              </div>
+              <h1 class="empty-title">Arrange &amp; print images with precision</h1>
+              <p class="empty-desc">
+                Drop one or more images here to start. Everything runs locally in your browser — your files never leave your device.
+              </p>
+              <div class="empty-actions">
+                <button class="btn btn-primary btn-lg" id="emptyBrowseBtn" type="button">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Choose Images
+                </button>
+                <button class="btn btn-secondary btn-lg" id="emptySampleBtn" type="button">
+                  Try Sample Set
+                </button>
+              </div>
+              <div class="empty-formats">
+                <span>JPEG</span>
+                <span>PNG</span>
+                <span>GIF</span>
+                <span>WebP</span>
+                <span class="muted">or paste with Ctrl+V</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rendered Printable Sheets -->
+          <div class="sheets-container show-guides" id="sheetsContainer" hidden></div>
+        </div>
+      </main>
+
+      <!-- Right Panel: Layout & Page Inspector -->
+      <aside class="panel inspector" id="inspectorPanel" aria-label="Print Settings">
+        <div class="panel-header">
+          <h2 class="panel-title">Print Settings</h2>
+          <div class="panel-actions">
+            <div class="unit-switch" role="group" aria-label="Measurement units">
+              <button class="unit-btn active" data-unit="mm" type="button">mm</button>
+              <button class="unit-btn" data-unit="in" type="button">in</button>
+            </div>
+            <button class="icon-btn-sm mobile-only" id="closeInspectorBtn" type="button" aria-label="Close Settings Panel">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="inspector-scroll">
+          <!-- Selected Photo Free Transform Panel (Visible when a photo is selected) -->
+          <section class="inspector-section transform-inspector-section" id="sectionSelectedTransform" hidden>
+            <div class="section-heading">
+              <h3>Free Transform</h3>
+              <button class="link-btn" id="tfDoneBtn" type="button">Done</button>
+            </div>
+
+            <div class="tf-selected-pill">
+              <span class="tf-selected-name" id="tfSelectedName">Photo</span>
+              <span class="tf-selected-hint">Drag · 8 anchors · Rotate</span>
+            </div>
+
+            <div class="custom-paper-grid" style="margin-top: 10px;">
+              <div class="field-col">
+                <label class="field-label" for="tfWidthInput">Width (<span class="unit-label">mm</span>)</label>
+                <input class="num-input" id="tfWidthInput" type="number" min="8" max="1200" step="1" />
+              </div>
+              <div class="field-col">
+                <label class="field-label" for="tfHeightInput">Height (<span class="unit-label">mm</span>)</label>
+                <input class="num-input" id="tfHeightInput" type="number" min="8" max="1200" step="1" />
+              </div>
+            </div>
+
+            <div class="custom-paper-grid" style="margin-top: 8px;">
+              <div class="field-col">
+                <label class="field-label" for="tfOffsetXInput">Offset X (<span class="unit-label">mm</span>)</label>
+                <input class="num-input" id="tfOffsetXInput" type="number" step="1" />
+              </div>
+              <div class="field-col">
+                <label class="field-label" for="tfOffsetYInput">Offset Y (<span class="unit-label">mm</span>)</label>
+                <input class="num-input" id="tfOffsetYInput" type="number" step="1" />
+              </div>
+            </div>
+
+            <div class="slider-field" style="margin-top: 10px; margin-bottom: 10px;">
+              <div class="field-row">
+                <label class="field-label" for="tfAngleRange">Rotation Angle</label>
+                <div class="tf-angle-input-wrap">
+                  <input class="num-input compact-num" id="tfAngleInput" type="number" min="-180" max="180" step="1" value="0" />
+                  <span class="deg-suffix">°</span>
+                </div>
+              </div>
+              <input class="range-input" id="tfAngleRange" type="range" min="-180" max="180" step="1" value="0" />
+            </div>
+
+            <div class="tf-action-row">
+              <button class="btn btn-subtle btn-sm" id="tfBringFrontBtn" type="button" title="Bring photo to front">Bring Front</button>
+              <button class="btn btn-ghost btn-sm" id="tfResetBtn" type="button" title="Reset this photo to its automatic layout slot">Reset Photo</button>
+            </div>
+          </section>
+
+          <!-- Mode-Specific Settings: ONE IMAGE PER PAGE -->
+          <section class="inspector-section" id="sectionOnePerPage">
+            <div class="section-heading">
+              <h3>Image Sizing</h3>
+              <span class="section-tag">One Per Page</span>
+            </div>
+
+            <div class="sizing-cards" role="radiogroup" aria-label="One image per page sizing mode">
+              <button class="sizing-card active" data-sizing="best-fit" type="button" role="radio" aria-checked="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="2 2"/><rect x="5.5" y="7" width="13" height="10" rx="1" fill="currentColor" fill-opacity="0.14"/></svg>
+                <span class="sizing-label">Best Fit</span>
+                <span class="sizing-hint">Proportional, no crop</span>
+              </button>
+              <button class="sizing-card" data-sizing="stretch" type="button" role="radio" aria-checked="false">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" fill="currentColor" fill-opacity="0.14"/><path d="M8 8 4.5 4.5M16 8l3.5-3.5M8 16l-3.5 3.5M16 16l3.5 3.5"/></svg>
+                <span class="sizing-label">Stretch to Fit</span>
+                <span class="sizing-hint">Fills printable area</span>
+              </button>
+              <button class="sizing-card" data-sizing="center" type="button" role="radio" aria-checked="false">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="2 2"/><rect x="8" y="8" width="8" height="8" rx="1" fill="currentColor" fill-opacity="0.18"/></svg>
+                <span class="sizing-label">Center</span>
+                <span class="sizing-hint">Natural original size</span>
+              </button>
+              <button class="sizing-card" data-sizing="freeform" type="button" role="radio" aria-checked="false">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="2 2"/><rect x="6" y="6" width="10" height="8" rx="1" fill="currentColor" fill-opacity="0.14"/><path d="M16 14l3 3M19 14v3h-3"/></svg>
+                <span class="sizing-label">Freeform</span>
+                <span class="sizing-hint">Custom W × H size</span>
+              </button>
+            </div>
+
+            <!-- Sub-controls: Center DPI -->
+            <div class="subpanel" id="centerSubpanel" hidden>
+              <div class="field-row">
+                <label class="field-label" for="centerDpiSelect">Print Resolution (DPI)</label>
+                <select class="select-input compact" id="centerDpiSelect">
+                  <option value="72">72 DPI</option>
+                  <option value="96" selected>96 DPI (Standard)</option>
+                  <option value="150">150 DPI (Medium)</option>
+                  <option value="300">300 DPI (High-Res)</option>
+                </select>
+              </div>
+              <p class="field-help" id="centerDpiHelp">
+                Maps pixel dimensions directly to physical paper size at 96 pixels per inch.
+              </p>
+            </div>
+
+            <!-- Sub-controls: Freeform Dimensions -->
+            <div class="subpanel" id="freeformSubpanel" hidden>
+              <div class="preset-chips" aria-label="Quick photo print sizes">
+                <button class="chip-btn" data-freeform-w="101.6" data-freeform-h="152.4" type="button">4×6"</button>
+                <button class="chip-btn" data-freeform-w="127" data-freeform-h="177.8" type="button">5×7"</button>
+                <button class="chip-btn" data-freeform-w="203.2" data-freeform-h="254" type="button">8×10"</button>
+                <button class="chip-btn" data-freeform-w="50.8" data-freeform-h="50.8" type="button">2×2"</button>
+                <button class="chip-btn" data-freeform-w="148" data-freeform-h="210" type="button">A5</button>
+              </div>
+
+              <div class="dim-grid">
+                <div class="field-col">
+                  <label class="field-label" for="freeformWidthInput">Width (<span class="unit-label">mm</span>)</label>
+                  <input class="num-input" id="freeformWidthInput" type="number" min="10" max="600" step="1" value="120" />
+                </div>
+                <button class="lock-btn active" id="freeformLockBtn" type="button" title="Lock aspect ratio" aria-pressed="true">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </button>
+                <div class="field-col">
+                  <label class="field-label" for="freeformHeightInput">Height (<span class="unit-label">mm</span>)</label>
+                  <input class="num-input" id="freeformHeightInput" type="number" min="10" max="600" step="1" value="160" />
+                </div>
+              </div>
+
+              <div class="field-row" style="margin-top: 10px;">
+                <label class="field-label">Fit inside box</label>
+                <div class="segmented-sm" role="group" aria-label="Freeform box fit">
+                  <button class="seg-btn active" data-freeform-fit="contain" type="button">Fit</button>
+                  <button class="seg-btn" data-freeform-fit="fill" type="button">Exact</button>
+                  <button class="seg-btn" data-freeform-fit="cover" type="button">Crop</button>
+                </div>
+              </div>
+
+              <div class="field-row align-row">
+                <label class="field-label">Position on page</label>
+                <div class="align-matrix" id="alignMatrix" role="group" aria-label="Freeform page alignment">
+                  <button class="align-dot" data-align="top-left" type="button" title="Top Left"></button>
+                  <button class="align-dot" data-align="top-center" type="button" title="Top Center"></button>
+                  <button class="align-dot" data-align="top-right" type="button" title="Top Right"></button>
+                  <button class="align-dot" data-align="center-left" type="button" title="Middle Left"></button>
+                  <button class="align-dot active" data-align="center-center" type="button" title="Center"></button>
+                  <button class="align-dot" data-align="center-right" type="button" title="Middle Right"></button>
+                  <button class="align-dot" data-align="bottom-left" type="button" title="Bottom Left"></button>
+                  <button class="align-dot" data-align="bottom-center" type="button" title="Bottom Center"></button>
+                  <button class="align-dot" data-align="bottom-right" type="button" title="Bottom Right"></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mode-Specific Settings: CUSTOM GRID (MULTI-PAGE) -->
+          <section class="inspector-section" id="sectionCustomGrid" hidden>
+            <div class="section-heading">
+              <h3>Grid Layout</h3>
+              <span class="section-tag">Multi-Page</span>
+            </div>
+
+            <div class="preset-chips" aria-label="Quick grid presets">
+              <button class="chip-btn" data-grid-preset="2x2" type="button">2 × 2</button>
+              <button class="chip-btn" data-grid-preset="2x3" type="button">2 × 3</button>
+              <button class="chip-btn" data-grid-preset="3x3" type="button">3 × 3</button>
+              <button class="chip-btn" data-grid-preset="3x4" type="button">3 × 4</button>
+              <button class="chip-btn" data-grid-preset="4x4" type="button">4 × 4</button>
+            </div>
+
+            <div class="stepper-grid">
+              <div class="field-col">
+                <label class="field-label" for="customRowsInput">Rows</label>
+                <div class="stepper">
+                  <button class="step-btn" data-step-target="customRows" data-delta="-1" type="button" aria-label="Decrease rows">−</button>
+                  <input class="step-input" id="customRowsInput" type="number" min="1" max="12" value="2" />
+                  <button class="step-btn" data-step-target="customRows" data-delta="1" type="button" aria-label="Increase rows">+</button>
+                </div>
+              </div>
+              <div class="field-col">
+                <label class="field-label" for="customColsInput">Columns</label>
+                <div class="stepper">
+                  <button class="step-btn" data-step-target="customCols" data-delta="-1" type="button" aria-label="Decrease columns">−</button>
+                  <input class="step-input" id="customColsInput" type="number" min="1" max="12" value="2" />
+                  <button class="step-btn" data-step-target="customCols" data-delta="1" type="button" aria-label="Increase columns">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-field">
+              <div class="field-row">
+                <label class="field-label" for="customGapRange">Cell Spacing</label>
+                <span class="value-readout"><span id="customGapValue">6</span> <span class="unit-label">mm</span></span>
+              </div>
+              <input class="range-input" id="customGapRange" type="range" min="0" max="30" step="0.5" value="6" />
+            </div>
+
+            <div class="field-row">
+              <label class="field-label">Cell Image Fit</label>
+              <div class="segmented-sm" role="group" aria-label="Custom grid image fit">
+                <button class="seg-btn active" data-grid-fit="contain" type="button">Best Fit</button>
+                <button class="seg-btn" data-grid-fit="cover" type="button">Fill</button>
+                <button class="seg-btn" data-grid-fit="fill" type="button">Stretch</button>
+              </div>
+            </div>
+
+            <p class="field-help" id="customGridSummary">4 images per page.</p>
+          </section>
+
+          <!-- Mode-Specific Settings: ALL IMAGES ON ONE PAGE -->
+          <section class="inspector-section" id="sectionAllOnOne" hidden>
+            <div class="section-heading">
+              <h3>Single-Page Grid</h3>
+              <span class="section-tag">1 Page</span>
+            </div>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <strong>Auto-optimize grid</strong>
+                <small>Automatically balances rows &amp; columns</small>
+              </span>
+              <input type="checkbox" class="switch-input" id="allOnOneAutoToggle" checked />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+
+            <div class="stepper-grid" style="margin-top: 10px;">
+              <div class="field-col">
+                <label class="field-label" for="allRowsInput">Rows</label>
+                <div class="stepper">
+                  <button class="step-btn" data-step-target="allRows" data-delta="-1" type="button" aria-label="Decrease rows">−</button>
+                  <input class="step-input" id="allRowsInput" type="number" min="1" max="20" value="2" />
+                  <button class="step-btn" data-step-target="allRows" data-delta="1" type="button" aria-label="Increase rows">+</button>
+                </div>
+              </div>
+              <div class="field-col">
+                <label class="field-label" for="allColsInput">Columns</label>
+                <div class="stepper">
+                  <button class="step-btn" data-step-target="allCols" data-delta="-1" type="button" aria-label="Decrease columns">−</button>
+                  <input class="step-input" id="allColsInput" type="number" min="1" max="20" value="2" />
+                  <button class="step-btn" data-step-target="allCols" data-delta="1" type="button" aria-label="Increase columns">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-field">
+              <div class="field-row">
+                <label class="field-label" for="allGapRange">Cell Spacing</label>
+                <span class="value-readout"><span id="allGapValue">4</span> <span class="unit-label">mm</span></span>
+              </div>
+              <input class="range-input" id="allGapRange" type="range" min="0" max="25" step="0.5" value="4" />
+            </div>
+
+            <div class="field-row">
+              <label class="field-label">Cell Image Fit</label>
+              <div class="segmented-sm" role="group" aria-label="Single page image fit">
+                <button class="seg-btn active" data-all-fit="contain" type="button">Best Fit</button>
+                <button class="seg-btn" data-all-fit="cover" type="button">Fill</button>
+                <button class="seg-btn" data-all-fit="fill" type="button">Stretch</button>
+              </div>
+            </div>
+
+            <p class="field-help" id="allOnOneSummary">All images automatically fit on one page.</p>
+          </section>
+
+          <!-- Paper & Margins -->
+          <section class="inspector-section">
+            <div class="section-heading">
+              <h3>Page Setup</h3>
+            </div>
+
+            <div class="field-col">
+              <label class="field-label" for="paperSizeSelect">Paper Size</label>
+              <select class="select-input" id="paperSizeSelect">
+                <option value="a4" selected>A4 (210 × 297 mm)</option>
+                <option value="letter">US Letter (8.5 × 11 in)</option>
+                <option value="folio">Folio (8 × 13 in)</option>
+                <option value="legal">US Legal (8.5 × 14 in)</option>
+                <option value="a3">A3 (297 × 420 mm)</option>
+                <option value="a5">A5 (148 × 210 mm)</option>
+                <option value="photo-4x6">Photo 4 × 6 in</option>
+                <option value="photo-5x7">Photo 5 × 7 in</option>
+                <option value="custom">Custom Size…</option>
+              </select>
+            </div>
+
+            <!-- Sub-controls: Custom Paper Dimensions -->
+            <div class="subpanel" id="customPaperSubpanel" hidden>
+              <div class="custom-paper-grid">
+                <div class="field-col">
+                  <label class="field-label" for="customPaperWidthInput">Width (<span class="unit-label">mm</span>)</label>
+                  <input class="num-input" id="customPaperWidthInput" type="number" min="30" max="1200" step="1" value="210" />
+                </div>
+                <div class="field-col">
+                  <label class="field-label" for="customPaperHeightInput">Height (<span class="unit-label">mm</span>)</label>
+                  <input class="num-input" id="customPaperHeightInput" type="number" min="30" max="1200" step="1" value="297" />
+                </div>
+              </div>
+              <p class="field-help">Set custom sheet dimensions (30 – 1200 mm / 1.2 – 47 in).</p>
+            </div>
+
+            <div class="field-col" style="margin-top: 12px;">
+              <label class="field-label">Orientation</label>
+              <div class="segmented-full" role="group" aria-label="Paper orientation">
+                <button class="seg-btn active" data-orientation="portrait" type="button">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="1.5"/></svg>
+                  Portrait
+                </button>
+                <button class="seg-btn" data-orientation="landscape" type="button">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="1.5"/></svg>
+                  Landscape
+                </button>
+              </div>
+            </div>
+
+            <div class="field-col" style="margin-top: 14px;">
+              <div class="field-row">
+                <label class="field-label" for="marginRange">Page Margins</label>
+                <span class="value-readout"><span id="marginValue">10</span> <span class="unit-label">mm</span></span>
+              </div>
+              <div class="preset-chips compact" aria-label="Margin presets">
+                <button class="chip-btn" data-margin-mm="0" type="button">None</button>
+                <button class="chip-btn" data-margin-mm="6" type="button">Narrow</button>
+                <button class="chip-btn active" data-margin-mm="10" type="button">Normal</button>
+                <button class="chip-btn" data-margin-mm="20" type="button">Wide</button>
+              </div>
+              <input class="range-input" id="marginRange" type="range" min="0" max="40" step="1" value="10" />
+            </div>
+          </section>
+
+          <!-- Print Finishing Options -->
+          <section class="inspector-section">
+            <div class="section-heading">
+              <h3>Print Output</h3>
+            </div>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <strong>Show image filenames</strong>
+                <small>Prints subtle caption below each photo</small>
+              </span>
+              <input type="checkbox" class="switch-input" id="showCaptionsToggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+
+            <label class="toggle-row" style="margin-top: 10px;">
+              <span class="toggle-copy">
+                <strong>Print subtle cut lines</strong>
+                <small>Hairline cell borders for trimming</small>
+              </span>
+              <input type="checkbox" class="switch-input" id="printCutLinesToggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+
+            <div class="print-tip">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>For edge-accurate output, keep Scale at <strong>100%</strong> and Margins at <strong>None / Default</strong> in your browser print dialog.</span>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Full-Window Drag-and-Drop Overlay -->
+    <div class="drop-overlay" id="dropOverlay" hidden aria-hidden="true">
+      <div class="drop-overlay-card">
+        <div class="drop-overlay-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <h2>Drop images to add to your print layout</h2>
+        <p>Supports JPEG, PNG, GIF, and WebP</p>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script defer src="js/constants.js"></script>
+  <script defer src="js/state.js"></script>
+  <script defer src="js/layout.js"></script>
+  <script defer src="js/preview.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+/* ==========================================================================
+   Shared Physical Sheet Geometry (Used identically on Screen & in Print)
+   ========================================================================== */
+
+.print-sheet {
+  width: var(--page-w-mm);
+  height: var(--page-h-mm);
+  padding: var(--margin-mm);
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  transform-origin: top left;
+  transform: scale(var(--preview-scale, 1));
+  color: #111827;
+}
+
+/* Preview-only printable area margin outline */
+.sheets-container.show-guides .print-sheet::after {
+  content: "";
+  position: absolute;
+  inset: var(--margin-mm);
+  border: 0.35mm dashed var(--guide-color);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.sheet-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.sheet-content.clip-printable {
+  overflow: hidden;
+}
+
+/* Background Grid Guides & Optional Cut Lines (Custom Grid & All on One Page) */
+.grid-guides-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 2), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--grid-rows, 2), minmax(0, 1fr));
+  gap: var(--grid-gap-mm, 5mm);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-guide-cell {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.sheets-container.show-guides .grid-guide-cell.is-empty {
+  border: 0.28mm dashed rgba(148, 163, 184, 0.42);
+  border-radius: 1mm;
+}
+
+.sheets-container.show-guides .grid-guide-cell.has-image {
+  outline: 0.25mm dotted rgba(37, 99, 235, 0.24);
+}
+
+.print-sheet.cut-lines .grid-guide-cell.has-image,
+.print-sheet.cut-lines .photo-node.is-freeform-box {
+  border: 0.2mm solid #cbd5e1;
+}
+
+/* Unified Photo Layer (Supports Drag, 8-Anchor Resize & Rotation in ALL Modes) */
+.sheet-items-layer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.photo-node {
+  position: absolute;
+  left: var(--item-left-mm, 0mm);
+  top: var(--item-top-mm, 0mm);
+  width: var(--item-w-mm, 100%);
+  height: var(--item-h-mm, 100%);
+  transform: rotate(var(--item-angle, 0deg));
+  transform-origin: center center;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.photo-node:hover:not(.is-selected) {
+  outline: 0.45mm solid rgba(37, 99, 235, 0.45);
+  outline-offset: 0.3mm;
+}
+
+.sheets-container.show-guides .photo-node.is-freeform-box:not(.is-selected) {
+  outline: 0.3mm dashed rgba(37, 99, 235, 0.45);
+}
+
+.photo-media {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Optional Printed Captions */
+.print-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 1mm);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 2.5mm;
+  line-height: 1.25;
+  color: #334155;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.print-caption.caption-lg {
+  font-size: 3.1mm;
+  top: calc(100% + 1.8mm);
+}
+
+/* ==========================================================================
+   Direct Browser Printing (@media print)
+   Strips all UI chrome and transform handles; prints exact physical pages.
+   ========================================================================== */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* Hide all application chrome and interactive transform overlays */
+  .topbar,
+  .sidebar,
+  .inspector,
+  .preview-toolbar,
+  .empty-state,
+  .sheet-meta,
+  .drop-overlay,
+  .toast-container,
+  .drawer-backdrop,
+  .transform-overlay,
+  .tf-box,
+  .tf-hud {
+    display: none !important;
+  }
+
+  /* Flatten all layout containers to plain block flow for reliable page breaks */
+  .app-shell,
+  .workspace,
+  .preview-area,
+  .preview-scroll,
+  .sheets-container,
+  .sheets-container.grid-view,
+  .sheet-slot,
+  .sheet-stage-wrap,
+  .sheet-viewport {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    background-image: none !important;
+    overflow: visible !important;
+    gap: 0 !important;
+  }
+
+  /* Never print preview guides, hover borders, or empty cell boxes */
+  .sheets-container.show-guides .print-sheet::after,
+  .sheets-container.show-guides .grid-guide-cell.is-empty {
+    display: none !important;
+    border: none !important;
+  }
+
+  .sheets-container.show-guides .grid-guide-cell.has-image,
+  .sheets-container.show-guides .photo-node.is-freeform-box,
+  .photo-node,
+  .photo-node:hover {
+    outline: none !important;
+  }
+
+  /* Exact Physical Sheet Rendering */
+  .sheet-slot {
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sheet-slot:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .print-sheet {
+    transform: none !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    width: var(--page-w-mm) !important;
+    /* 0.2mm tolerance prevents subpixel browser rounding from creating trailing blank pages */
+    height: calc(var(--page-h-mm) - 0.2mm) !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
