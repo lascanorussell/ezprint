@@ -611,6 +611,20 @@
             guides.appendChild(cell);
           }
           content.appendChild(guides);
+        } else if (sheetSpec.mode === 'per-page' && sheetSpec.slots) {
+          const guides = document.createElement('div');
+          guides.className = 'slot-guides-layer';
+
+          sheetSpec.slots.forEach((slotRect, idx) => {
+            const box = document.createElement('div');
+            box.className = idx < sheetSpec.images.length ? 'slot-guide-box has-image' : 'slot-guide-box is-empty';
+            box.style.left = `${slotRect.x}mm`;
+            box.style.top = `${slotRect.y}mm`;
+            box.style.width = `${slotRect.w}mm`;
+            box.style.height = `${slotRect.h}mm`;
+            guides.appendChild(box);
+          });
+          content.appendChild(guides);
         }
 
         // Unified physical photo items layer
@@ -680,6 +694,9 @@
         meta.className = 'sheet-meta';
         if (sheetSpec.mode === 'one-per-page') {
           meta.textContent = `Page ${sheetSpec.pageNumber} of ${totalPages} · ${sheetSpec.image.name}`;
+        } else if (sheetSpec.mode === 'per-page') {
+          const countLabel = `${sheetSpec.images.length} ${sheetSpec.images.length === 1 ? 'image' : 'images'}`;
+          meta.textContent = `Page ${sheetSpec.pageNumber} of ${totalPages} · ${countLabel} (${sheetSpec.targetPerPage} per page)`;
         } else {
           meta.textContent = `Page ${sheetSpec.pageNumber} of ${totalPages} · ${sheetSpec.images.length} ${
             sheetSpec.images.length === 1 ? 'image' : 'images'

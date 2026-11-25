@@ -41,6 +41,10 @@
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><rect x="7.5" y="7" width="9" height="10" rx="1"/></svg>
           <span>One Per Page</span>
         </button>
+        <button class="mode-tab" role="tab" aria-selected="false" data-mode="per-page" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="15" x2="17" y2="15"/></svg>
+          <span>Images Per Page</span>
+        </button>
         <button class="mode-tab" role="tab" aria-selected="false" data-mode="custom-grid" type="button">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           <span>Custom Grid</span>
@@ -359,6 +363,69 @@
                 </div>
               </div>
             </div>
+          </section>
+
+          <!-- Mode-Specific Settings: IMAGES PER PAGE (AUTO-FIT MULTI-PAGE) -->
+          <section class="inspector-section" id="sectionPerPage" hidden>
+            <div class="section-heading">
+              <h3>Images Per Page</h3>
+              <span class="section-tag">Auto-Fit</span>
+            </div>
+
+            <div class="preset-chips" aria-label="Quick images per page presets">
+              <button class="chip-btn" data-per-page-preset="2" type="button">2</button>
+              <button class="chip-btn active" data-per-page-preset="3" type="button">3</button>
+              <button class="chip-btn" data-per-page-preset="4" type="button">4</button>
+              <button class="chip-btn" data-per-page-preset="5" type="button">5</button>
+              <button class="chip-btn" data-per-page-preset="6" type="button">6</button>
+              <button class="chip-btn" data-per-page-preset="8" type="button">8</button>
+            </div>
+
+            <div class="field-col" style="margin-bottom: 12px;">
+              <label class="field-label" for="perPageCountInput">Photos on each page</label>
+              <div class="stepper">
+                <button class="step-btn" data-step-target="perPageCount" data-delta="-1" type="button" aria-label="Decrease images per page">−</button>
+                <input class="step-input" id="perPageCountInput" type="number" min="1" max="20" value="3" />
+                <button class="step-btn" data-step-target="perPageCount" data-delta="1" type="button" aria-label="Increase images per page">+</button>
+              </div>
+            </div>
+
+            <div class="field-col" style="margin-bottom: 12px;">
+              <label class="field-label">Arrangement</label>
+              <div class="segmented-sm segmented-3" role="group" aria-label="Images per page arrangement">
+                <button class="seg-btn active" data-per-page-flow="auto" type="button">Auto</button>
+                <button class="seg-btn" data-per-page-flow="rows" type="button">Rows</button>
+                <button class="seg-btn" data-per-page-flow="cols" type="button">Columns</button>
+              </div>
+            </div>
+
+            <div class="slider-field">
+              <div class="field-row">
+                <label class="field-label" for="perPageGapRange">Image Spacing</label>
+                <span class="value-readout"><span id="perPageGapValue">6</span> <span class="unit-label">mm</span></span>
+              </div>
+              <input class="range-input" id="perPageGapRange" type="range" min="0" max="30" step="0.5" value="6" />
+            </div>
+
+            <div class="field-row" style="margin-bottom: 12px;">
+              <label class="field-label">Image Fit</label>
+              <div class="segmented-sm" role="group" aria-label="Images per page fit">
+                <button class="seg-btn active" data-per-page-fit="contain" type="button">Best Fit</button>
+                <button class="seg-btn" data-per-page-fit="cover" type="button">Fill</button>
+                <button class="seg-btn" data-per-page-fit="fill" type="button">Stretch</button>
+              </div>
+            </div>
+
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <strong>Fill partial last page</strong>
+                <small>Expand remaining photos to fill the last page</small>
+              </span>
+              <input type="checkbox" class="switch-input" id="perPageFillLastToggle" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+
+            <p class="field-help" id="perPageSummary">Fits 3 images per page automatically.</p>
           </section>
 
           <!-- Mode-Specific Settings: CUSTOM GRID (MULTI-PAGE) -->

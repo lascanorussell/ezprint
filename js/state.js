@@ -57,7 +57,16 @@
         freeformAlign: 'center-center'
       },
 
-      // Mode 2: Custom Grid (Multi-Page)
+      // Mode 2: Images Per Page (Auto-fit multi-page, non-grid packing)
+      perPage: {
+        count: 3, // 1..20 images per page
+        flow: 'auto', // 'auto' | 'rows' | 'cols'
+        gapMm: 6,
+        cellFit: 'contain', // 'contain' | 'cover' | 'fill'
+        fillPartialLastPage: false
+      },
+
+      // Mode 3: Custom Grid (Multi-Page)
       customGrid: {
         rows: 2,
         cols: 2,
@@ -450,6 +459,13 @@
 
     updateOnePerPage(patch) {
       Object.assign(this.state.onePerPage, patch);
+      this.notify('layout');
+    }
+
+    updatePerPage(patch) {
+      if (patch.count !== undefined) patch.count = clamp(Math.round(Number(patch.count) || 1), 1, 20);
+      if (patch.gapMm !== undefined) patch.gapMm = clamp(Number(patch.gapMm) || 0, 0, 30);
+      Object.assign(this.state.perPage, patch);
       this.notify('layout');
     }
 

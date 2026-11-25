@@ -84,8 +84,19 @@
         unitBtns: Array.from(document.querySelectorAll('.unit-btn')),
         unitLabels: Array.from(document.querySelectorAll('.unit-label')),
         sectionOnePerPage: byId('sectionOnePerPage'),
+        sectionPerPage: byId('sectionPerPage'),
         sectionCustomGrid: byId('sectionCustomGrid'),
         sectionAllOnOne: byId('sectionAllOnOne'),
+
+        // Mode 2: Images Per Page
+        perPagePresetBtns: Array.from(document.querySelectorAll('[data-per-page-preset]')),
+        perPageCountInput: byId('perPageCountInput'),
+        perPageFlowBtns: Array.from(document.querySelectorAll('[data-per-page-flow]')),
+        perPageGapRange: byId('perPageGapRange'),
+        perPageGapValue: byId('perPageGapValue'),
+        perPageFitBtns: Array.from(document.querySelectorAll('[data-per-page-fit]')),
+        perPageFillLastToggle: byId('perPageFillLastToggle'),
+        perPageSummary: byId('perPageSummary'),
 
         // Mode 1: One Per Page
         sizingCards: Array.from(document.querySelectorAll('.sizing-card')),
@@ -100,7 +111,7 @@
         freeformFitBtns: Array.from(document.querySelectorAll('[data-freeform-fit]')),
         alignDots: Array.from(document.querySelectorAll('.align-dot')),
 
-        // Mode 2: Custom Grid
+        // Mode 3: Custom Grid
         gridPresetBtns: Array.from(document.querySelectorAll('[data-grid-preset]')),
         customRowsInput: byId('customRowsInput'),
         customColsInput: byId('customColsInput'),
@@ -376,7 +387,38 @@
         });
       });
 
-      // Mode 2: Custom Grid
+      // Mode 2: Images Per Page
+      el.perPagePresetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this.store.updatePerPage({ count: parseInt(btn.dataset.perPagePreset, 10) || 1 });
+        });
+      });
+
+      el.perPageCountInput.addEventListener('change', (e) => {
+        this.store.updatePerPage({ count: parseInt(e.target.value, 10) || 1 });
+      });
+
+      el.perPageFlowBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this.store.updatePerPage({ flow: btn.dataset.perPageFlow });
+        });
+      });
+
+      el.perPageGapRange.addEventListener('input', (e) => {
+        this.store.updatePerPage({ gapMm: parseFloat(e.target.value) });
+      });
+
+      el.perPageFitBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this.store.updatePerPage({ cellFit: btn.dataset.perPageFit });
+        });
+      });
+
+      el.perPageFillLastToggle.addEventListener('change', (e) => {
+        this.store.updatePerPage({ fillPartialLastPage: e.target.checked });
+      });
+
+      // Mode 3: Custom Grid
       el.gridPresetBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
           const [rows, cols] = btn.dataset.gridPreset.split('x').map(Number);
@@ -448,7 +490,9 @@
           const delta = parseInt(btn.dataset.delta, 10);
           const state = this.store.getState();
 
-          if (target === 'customRows') {
+          if (target === 'perPageCount') {
+            this.store.updatePerPage({ count: state.perPage.count + delta });
+          } else if (target === 'customRows') {
             this.store.updateCustomGrid({ rows: state.customGrid.rows + delta });
           } else if (target === 'customCols') {
             this.store.updateCustomGrid({ cols: state.customGrid.cols + delta });
@@ -840,6 +884,7 @@
 
       // Visible mode section
       el.sectionOnePerPage.hidden = state.layoutMode !== 'one-per-page';
+      el.sectionPerPage.hidden = state.layoutMode !== 'per-page';
       el.sectionCustomGrid.hidden = state.layoutMode !== 'custom-grid';
       el.sectionAllOnOne.hidden = state.layoutMode !== 'all-on-one';
 
@@ -903,7 +948,40 @@
         dot.classList.toggle('active', dot.dataset.align === opp.freeformAlign);
       });
 
-      // Mode 2: Custom Grid
+      // Mode 2: Images Per Page
+      const pp = state.perPage;
+      el.perPageCountInput.value = String(pp.count);
+      el.perPageGapRange.value = String(pp.gapMm);
+      el.perPageGapValue.textContent = formatUnitValue(pp.gapMm, unit);
+      el.perPageFillLastToggle.checked = pp.fillPartialLastPage;
+
+      el.perPagePresetBtns.forEach((btn) => {
+        btn.classList.toggle('active', parseInt(btn.dataset.perPagePreset, 10) === pp.count);
+      });
+      el.perPageFlowBtns.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.perPageFlow === pp.flow);
+      });
+      el.perPageFitBtns.forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.perPageFit === pp.cellFit);
+      });
+
+      if (state.images.length > 0) {
+        const totalP = Math.ceil(state.images.length / pp.count);
+        const remainder = state.images.length % pp.count;
+        const lastInfo =
+          remainder > 0 && totalP > 1
+            ? ` (${remainder} ${remainder === 1 ? 'image' : 'images'} on last page)`
+            : '';
+        el.perPageSummary.textContent = `${state.images.length} ${
+          state.images.length === 1 ? 'image' : 'images'
+        } · ${pp.count} per page → ${totalP} ${totalP === 1 ? 'page' : 'pages'}${lastInfo}.`;
+      } else {
+        el.perPageSummary.textContent = `Automatically fits ${pp.count} ${
+          pp.count === 1 ? 'image' : 'images'
+        } per page without a rigid grid.`;
+      }
+
+      // Mode 3: Custom Grid
       const cg = state.customGrid;
       el.customRowsInput.value = String(cg.rows);
       el.customColsInput.value = String(cg.cols);

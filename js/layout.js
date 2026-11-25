@@ -170,6 +170,127 @@
   }
 
   /**
+   * Generates balanced non-grid slot rectangles for K images on a page
+   * without rigid empty grid cells (justified row or column strips).
+   */
+  function generateStripSlots(slotCount, direction, strips, printableW, printableH, gapMm) {
+    const base = Math.floor(slotCount / strips);
+    const extra = slotCount % strips;
+    const slots = [];
+
+    if (direction === 'rows') {
+      const rowH = (printableH - gapMm * (strips - 1)) / strips;
+      if (rowH <= 2) return null;
+      for (let r = 0; r < strips; r++) {
+        const countInRow = r < extra ? base + 1 : base;
+        const slotW = (printableW - gapMm * (countInRow - 1)) / countInRow;
+        if (slotW <= 2) return null;
+        const y = r * (rowH + gapMm);
+        for (let c = 0; c < countInRow; c++) {
+          slots.push({ x: c * (slotW + gapMm), y, w: slotW, h: rowH });
+        }
+      }
+    } else {
+      const colW = (printableW - gapMm * (strips - 1)) / strips;
+      if (colW <= 2) return null;
+      for (let c = 0; c < strips; c++) {
+        const countInCol = c < extra ? base + 1 : base;
+        const slotH = (printableH - gapMm * (countInCol - 1)) / countInCol;
+        if (slotH <= 2) return null;
+        const x = c * (colW + gapMm);
+        for (let r = 0; r < countInCol; r++) {
+          slots.push({ x, y: r * (slotH + gapMm), w: colW, h: slotH });
+        }
+      }
+    }
+
+    return { slots, isUniform: extra === 0 };
+  }
+
+  /**
+   * Picks the optimal balanced strip layout for `slotCount` images on a page
+   * and maps each image in `slice` into its physical slot + Free Transform.
+   */
+  function buildPerPageLayout(slice, slotCount, flow, gapMm, cellFit, metrics, showCaptions, avgAspect) {
+    const printableW = metrics.printableWidthMm;
+    const printableH = metrics.printableHeightMm;
+    const captionH = showCaptions ? 4.8 : 0;
+
+    const directions = flow === 'rows' ? ['rows'] : flow === 'cols' ? ['cols'] : ['rows', 'cols'];
+    let best = null;
+
+    for (const dir of directions) {
+      // When user explicitly picks Rows or Columns (and slotCount > 1), require at least 2 strips
+      // so "Rows" always stacks horizontal rows and "Columns" always places side-by-side columns.
+      const minStrips = flow !== 'auto' && slotCount > 1 ? 2 : 1;
+      for (let strips = minStrips; strips <= slotCount; strips++) {
+        const candidate = generateStripSlots(slotCount, dir, strips, printableW, printableH, gapMm);
+        if (!candidate) continue;
+
+        let totalArea = 0;
+        let minArea = Infinity;
+
+        for (let i = 0; i < slotCount; i++) {
+          const slot = candidate.slots[i];
+          const mediaH = Math.max(4, slot.h - captionH);
+          const img = slice[i];
+          const aspect = img
+            ? Math.max(1, img.naturalWidth) / Math.max(1, img.naturalHeight)
+            : avgAspect;
+
+          let renderedArea;
+          if (cellFit === 'contain') {
+            const fitted = fitAspect(aspect * 1000, 1000, slot.w, mediaH);
+            renderedArea = fitted.w * fitted.h;
+          } else {
+            renderedArea = slot.w * mediaH;
+          }
+
+          totalArea += renderedArea;
+          if (renderedArea < minArea) minArea = renderedArea;
+        }
+
+        const avgArea = totalArea / slotCount;
+        // Favor high usable photo area, balanced minimum photo size, and uniform strips
+        const uniformBonus = candidate.isUniform ? 1.05 : 1.0;
+        const score = (avgArea * 0.52 + minArea * 0.48) * uniformBonus;
+
+        if (!best || score > best.score) {
+          best = { score, slots: candidate.slots, direction: dir, strips };
+        }
+      }
+    }
+
+    const chosenSlots = best
+      ? best.slots
+      : [{ x: 0, y: 0, w: printableW, h: printableH }];
+
+    const items = slice.map((img, i) => {
+      const slot = chosenSlots[i] || chosenSlots[chosenSlots.length - 1];
+      const mediaH = Math.max(4, slot.h - captionH);
+
+      let w = slot.w;
+      let h = mediaH;
+      if (cellFit === 'contain') {
+        const fitted = fitAspect(img.naturalWidth, img.naturalHeight, slot.w, mediaH);
+        w = fitted.w;
+        h = fitted.h;
+      }
+
+      const baseRect = {
+        cx: slot.x + slot.w / 2,
+        cy: slot.y + mediaH / 2,
+        w,
+        h
+      };
+
+      return applyTransform(img, 'per-page', baseRect, cellFit);
+    });
+
+    return { slots: chosenSlots, items };
+  }
+
+  /**
    * Builds the complete print plan consumed by the preview & print DOM renderer.
    */
   function computeLayoutPlan(state) {
@@ -255,6 +376,41 @@
           items: [item]
         });
       });
+    } else if (state.layoutMode === 'per-page') {
+      const cfg = state.perPage;
+      const perPage = clamp(Math.round(cfg.count) || 1, 1, 20);
+      const totalPages = Math.ceil(images.length / perPage);
+      const avgAspect =
+        images.reduce((sum, img) => sum + img.naturalWidth / Math.max(1, img.naturalHeight), 0) /
+        Math.max(1, images.length);
+
+      for (let p = 0; p < totalPages; p++) {
+        const slice = images.slice(p * perPage, (p + 1) * perPage);
+        const slotCount = cfg.fillPartialLastPage ? slice.length : perPage;
+        const packed = buildPerPageLayout(
+          slice,
+          slotCount,
+          cfg.flow || 'auto',
+          cfg.gapMm,
+          cfg.cellFit,
+          metrics,
+          showCaptions,
+          avgAspect
+        );
+
+        packed.items.forEach((item) => {
+          itemsById[item.image.id] = { sheetIndex: p, item };
+        });
+
+        sheets.push({
+          pageNumber: p + 1,
+          mode: 'per-page',
+          targetPerPage: perPage,
+          images: slice,
+          slots: packed.slots,
+          items: packed.items
+        });
+      }
     } else if (state.layoutMode === 'custom-grid') {
       const rows = clamp(state.customGrid.rows, 1, 12);
       const cols = clamp(state.customGrid.cols, 1, 12);

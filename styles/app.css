@@ -1430,6 +1430,12 @@ body.tf-rotating * {
   width: 100%;
 }
 
+.segmented-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+}
+
 .seg-btn {
   display: inline-flex;
   align-items: center;
@@ -1750,6 +1756,12 @@ body.tf-rotating * {
   z-index: 25;
 }
 
+@media (min-width: 1081px) {
+  .drawer-backdrop {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1080px) {
   .mobile-only {
     display: inline-flex;
@@ -1757,6 +1769,15 @@ body.tf-rotating * {
 
   .hide-md,
   .brand-sub {
+    display: none;
+  }
+
+  .mode-tab {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .mode-tab svg {
     display: none;
   }
 

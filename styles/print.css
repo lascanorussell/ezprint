@@ -67,8 +67,31 @@
 }
 
 .print-sheet.cut-lines .grid-guide-cell.has-image,
+.print-sheet.cut-lines .slot-guide-box.has-image,
 .print-sheet.cut-lines .photo-node.is-freeform-box {
   border: 0.2mm solid #cbd5e1;
+}
+
+/* Auto-Fit Non-Grid Slot Guides (Images Per Page Mode) */
+.slot-guides-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slot-guide-box {
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.sheets-container.show-guides .slot-guide-box.is-empty {
+  border: 0.28mm dashed rgba(148, 163, 184, 0.35);
+  border-radius: 1mm;
+}
+
+.sheets-container.show-guides .slot-guide-box.has-image {
+  outline: 0.25mm dotted rgba(37, 99, 235, 0.22);
 }
 
 /* Unified Photo Layer (Supports Drag, 8-Anchor Resize & Rotation in ALL Modes) */
@@ -211,12 +234,14 @@
 
   /* Never print preview guides, hover borders, or empty cell boxes */
   .sheets-container.show-guides .print-sheet::after,
-  .sheets-container.show-guides .grid-guide-cell.is-empty {
+  .sheets-container.show-guides .grid-guide-cell.is-empty,
+  .sheets-container.show-guides .slot-guide-box.is-empty {
     display: none !important;
     border: none !important;
   }
 
   .sheets-container.show-guides .grid-guide-cell.has-image,
+  .sheets-container.show-guides .slot-guide-box.has-image,
   .sheets-container.show-guides .photo-node.is-freeform-box,
   .photo-node,
   .photo-node:hover {
