@@ -11,7 +11,7 @@
   const PAPER_SIZES = {
     a4: { id: 'a4', label: 'A4', widthMm: 210, heightMm: 297 },
     letter: { id: 'letter', label: 'US Letter', widthMm: 215.9, heightMm: 279.4 },
-    folio: { id: 'folio', label: 'Folio', widthMm: 203.2, heightMm: 330.2 },
+    folio: { id: 'folio', label: 'Folio', widthMm: 215.9, heightMm: 330.2  },
     legal: { id: 'legal', label: 'US Legal', widthMm: 215.9, heightMm: 355.6 },
     a3: { id: 'a3', label: 'A3', widthMm: 297, heightMm: 420 },
     a5: { id: 'a5', label: 'A5', widthMm: 148, heightMm: 210 },
